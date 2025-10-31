@@ -152,9 +152,9 @@ def generar_reporte():
             except Exception:
                 return ImageFont.load_default()
 
-        font_title = safe_font(font_bold_path, 20)
-        font_body = safe_font(font_regular_path, 18)
-        font_bold = safe_font(font_bold_path, 20)
+        font_title = safe_font(font_bold_path, 19)
+        font_body = safe_font(font_regular_path, 15)
+        font_bold = safe_font(font_bold_path, 18)
 
         # === 5. Configuración del texto ===
         x0, y0 = 430, 350
