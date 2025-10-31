@@ -6,6 +6,7 @@ from PIL import Image, ImageDraw, ImageFont
 import requests
 from io import BytesIO
 from datetime import datetime
+import os
 
 app = FastAPI(title="Generador de Reportes Agrícolas")
 
@@ -89,7 +90,7 @@ def generar_reporte():
         sheet_name = "formulario de prueba"
         sheet_name_encoded = quote(sheet_name)
         url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet_name_encoded}"
-        df = pd.read_csv(url)
+        df = pd.read_csv(url, encoding="utf-8")
 
         df = df.dropna(how="all")
         if "Marca temporal" in df.columns:
@@ -137,19 +138,23 @@ def generar_reporte():
         file_id = drive_link.split("/d/")[1].split("/")[0]
         download_url = f"https://drive.google.com/uc?export=download&id={file_id}"
         response = requests.get(download_url)
-        img = Image.open(BytesIO(response.content))
+        img = Image.open(BytesIO(response.content)).convert("RGB")
         draw = ImageDraw.Draw(img)
 
-        # === 4. Fuentes (compatibles con Render) ===
+        # === 4. Fuentes personalizadas ===
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        font_regular_path = os.path.join(base_path, "fonts", "Poppins-Regular.ttf")
+        font_bold_path = os.path.join(base_path, "fonts", "Poppins-Bold.ttf")
+
         def safe_font(path, size):
             try:
-                return ImageFont.truetype(path, size)
-            except:
+                return ImageFont.truetype(path, size, encoding="utf-8")
+            except Exception:
                 return ImageFont.load_default()
 
-        font_title = safe_font("arialbd.ttf", 20)
-        font_body = safe_font("arial.ttf", 20)
-        font_bold = safe_font("arialbd.ttf", 22)
+        font_title = safe_font(font_bold_path, 22)
+        font_body = safe_font(font_regular_path, 20)
+        font_bold = safe_font(font_bold_path, 22)
 
         # === 5. Configuración del texto ===
         x0, y0 = 430, 350
@@ -157,7 +162,6 @@ def generar_reporte():
         max_width = x1 - x0
         line_spacing = 8
 
-        # === Función para medir texto compatible con Pillow ===
         def get_text_width(draw, text, font):
             if hasattr(draw, "textbbox"):
                 bbox = draw.textbbox((0, 0), text, font=font)
@@ -166,7 +170,6 @@ def generar_reporte():
                 w, _ = draw.textsize(text, font=font)
                 return w
 
-        # === Envoltura de texto ===
         def wrap_text(draw, text, font, max_width):
             lines = []
             for paragraph in text.split("\n"):
@@ -224,6 +227,5 @@ def generar_reporte():
         return Response(content=output_buffer.getvalue(), media_type="image/png")
 
     except Exception as e:
-        # Captura errores (por ejemplo en Render)
         return HTMLResponse(content=f"<h3 style='color:red;'>⚠️ Error: {e}</h3>")
 
