@@ -83,124 +83,147 @@ def home():
 # ===========================
 @app.get("/generar")
 def generar_reporte():
-    sheet_id = "1N2ZviQnjLIdTPARD2ksI47Wt-0Jzyjmndu4wtYqvc0k"
-    sheet_name = "formulario de prueba"
-    sheet_name_encoded = quote(sheet_name)
-    url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet_name_encoded}"
-    df = pd.read_csv(url)
-
-    df = df.dropna(how="all")
-    if "Marca temporal" in df.columns:
-        df = df.drop(columns=["Marca temporal"])
-
-    ultimo_registro = df.iloc[-1].to_dict()
-
-    valor_raw = ultimo_registro.get("Número de Reporte (Sólo número correlativo)", "")
     try:
-        numero_reporte_valor = int(float(str(valor_raw).strip()))
-    except ValueError:
-        numero_reporte_valor = 0
+        # === 1. Leer datos ===
+        sheet_id = "1N2ZviQnjLIdTPARD2ksI47Wt-0Jzyjmndu4wtYqvc0k"
+        sheet_name = "formulario de prueba"
+        sheet_name_encoded = quote(sheet_name)
+        url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet_name_encoded}"
+        df = pd.read_csv(url)
 
-    anio_actual = datetime.now().year
-    titulo_lineas = [
-        f"REPORTE RÁPIDO N° {numero_reporte_valor}-{anio_actual}-",
-        "SG-ODNGRD-COESMIDAGRI",
-        "REPORTE DE EVENTO AGRÍCOLA"
-    ]
+        df = df.dropna(how="all")
+        if "Marca temporal" in df.columns:
+            df = df.drop(columns=["Marca temporal"])
 
-    fecha_valor = str(ultimo_registro.get("Fecha", "")).strip()
-    hora_valor = str(ultimo_registro.get("Hora", "")).strip()
-    fecha_hora_combinada = f"{fecha_valor} - {hora_valor} horas"
+        ultimo_registro = df.iloc[-1].to_dict()
 
-    campos_texto = {
-        "Tipo de evento": ultimo_registro.get("Tipo de evento", ""),
-        "Fecha y Hora": fecha_hora_combinada,
-        "Lugar": ultimo_registro.get("Lugar (Departamento/Provincia/Distrito/Centro Poblado-caserío-etc)", ""),
-        "Afectación Preliminar": ultimo_registro.get("Afectación Preliminar", ""),
-        "Acción Local": ultimo_registro.get("Acción Local", ""),
-        "Acción Sectorial": ultimo_registro.get("Acción Sectorial", ""),
-        "Código SINPAD": ultimo_registro.get("Código SINPAD", ""),
-        "Fuente": ultimo_registro.get("Fuente", "")
-    }
+        # === 2. Formato texto ===
+        valor_raw = ultimo_registro.get("Número de Reporte (Sólo número correlativo)", "")
+        try:
+            numero_reporte_valor = int(float(str(valor_raw).strip()))
+        except ValueError:
+            numero_reporte_valor = 0
 
-    texto_final = ""
-    contador = 1
-    for titulo, valor in campos_texto.items():
-        texto_final += f"{contador}. {titulo}:\n{valor}\n\n"
-        contador += 1
+        anio_actual = datetime.now().year
+        titulo_lineas = [
+            f"REPORTE RÁPIDO N° {numero_reporte_valor}-{anio_actual}-",
+            "SG-ODNGRD-COESMIDAGRI",
+            "REPORTE DE EVENTO AGRÍCOLA"
+        ]
 
-    # === IMAGEN BASE ===
-    drive_link = "https://drive.google.com/file/d/1AjfY8329DtFq_CEOgnIXgZEdXTJD92Sy/view?usp=drive_link"
-    file_id = drive_link.split("/d/")[1].split("/")[0]
-    download_url = f"https://drive.google.com/uc?export=download&id={file_id}"
-    response = requests.get(download_url)
-    img = Image.open(BytesIO(response.content))
-    draw = ImageDraw.Draw(img)
+        fecha_valor = str(ultimo_registro.get("Fecha", "")).strip()
+        hora_valor = str(ultimo_registro.get("Hora", "")).strip()
+        fecha_hora_combinada = f"{fecha_valor} - {hora_valor} horas"
 
-    try:
-        font_title = ImageFont.truetype("arialbd.ttf", 20)
-        font_body = ImageFont.truetype("arial.ttf", 20)
-        font_bold = ImageFont.truetype("arialbd.ttf", 22)
-    except:
-        font_title = ImageFont.load_default()
-        font_body = ImageFont.load_default()
-        font_bold = font_body
+        campos_texto = {
+            "Tipo de evento": ultimo_registro.get("Tipo de evento", ""),
+            "Fecha y Hora": fecha_hora_combinada,
+            "Lugar": ultimo_registro.get("Lugar (Departamento/Provincia/Distrito/Centro Poblado-caserío-etc)", ""),
+            "Afectación Preliminar": ultimo_registro.get("Afectación Preliminar", ""),
+            "Acción Local": ultimo_registro.get("Acción Local", ""),
+            "Acción Sectorial": ultimo_registro.get("Acción Sectorial", ""),
+            "Código SINPAD": ultimo_registro.get("Código SINPAD", ""),
+            "Fuente": ultimo_registro.get("Fuente", "")
+        }
 
-    x0, y0 = 430, 350
-    x1, y1 = 900, 480
-    max_width = x1 - x0
-    line_spacing = 8
+        texto_final = ""
+        contador = 1
+        for titulo, valor in campos_texto.items():
+            texto_final += f"{contador}. {titulo}:\n{valor}\n\n"
+            contador += 1
 
-    def wrap_text(draw, text, font, max_width):
-        lines = []
-        for paragraph in text.split("\n"):
-            words = paragraph.split(" ")
-            line = ""
-            for word in words:
-                test_line = line + word + " "
-                w, _ = draw.textsize(test_line, font=font)
-                if w <= max_width:
-                    line = test_line
-                else:
-                    lines.append(line.strip())
-                    line = word + " "
-            lines.append(line.strip())
-        return lines
+        # === 3. Imagen base ===
+        drive_link = "https://drive.google.com/file/d/1AjfY8329DtFq_CEOgnIXgZEdXTJD92Sy/view?usp=drive_link"
+        file_id = drive_link.split("/d/")[1].split("/")[0]
+        download_url = f"https://drive.google.com/uc?export=download&id={file_id}"
+        response = requests.get(download_url)
+        img = Image.open(BytesIO(response.content))
+        draw = ImageDraw.Draw(img)
 
-    def draw_wrapped_report(draw, text, x, y, font_normal, font_bold, fill, max_width, line_spacing):
-        for bloque in text.strip().split("\n\n"):
-            if not bloque.strip():
-                continue
-            lines = bloque.split("\n")
-            if len(lines) > 1 and ":" in lines[0]:
-                title_line = lines[0]
-                value_text = "\n".join(lines[1:])
-                wrapped_title = wrap_text(draw, title_line, font_bold, max_width)
-                for line in wrapped_title:
-                    draw.text((x, y), line, font=font_bold, fill=fill)
-                    y += font_bold.getsize(line)[1] + line_spacing
-                wrapped_value = wrap_text(draw, value_text, font_normal, max_width)
-                for line in wrapped_value:
-                    draw.text((x, y), line, font=font_normal, fill=fill)
-                    y += font_normal.getsize(line)[1] + line_spacing
-                y += line_spacing
+        # === 4. Fuentes (compatibles con Render) ===
+        def safe_font(path, size):
+            try:
+                return ImageFont.truetype(path, size)
+            except:
+                return ImageFont.load_default()
+
+        font_title = safe_font("arialbd.ttf", 20)
+        font_body = safe_font("arial.ttf", 20)
+        font_bold = safe_font("arialbd.ttf", 22)
+
+        # === 5. Configuración del texto ===
+        x0, y0 = 430, 350
+        x1, y1 = 900, 480
+        max_width = x1 - x0
+        line_spacing = 8
+
+        # === Función para medir texto compatible con Pillow ===
+        def get_text_width(draw, text, font):
+            if hasattr(draw, "textbbox"):
+                bbox = draw.textbbox((0, 0), text, font=font)
+                return bbox[2] - bbox[0]
             else:
-                wrapped_lines = wrap_text(draw, bloque, font_normal, max_width)
-                for line in wrapped_lines:
-                    draw.text((x, y), line, font=font_normal, fill=fill)
-                    y += font_normal.getsize(line)[1] + line_spacing
-        return y
+                w, _ = draw.textsize(text, font=font)
+                return w
 
-    # === Dibuja título centrado ===
-    y_text = y0 + 10
-    for linea in titulo_lineas:
-        linea_width, _ = draw.textsize(linea, font=font_title)
-        linea_x = x0 + (max_width - linea_width) / 2
-        draw.text((linea_x, y_text), linea, font=font_title, fill="black")
-        y_text += font_title.getsize(linea)[1] + 4
+        # === Envoltura de texto ===
+        def wrap_text(draw, text, font, max_width):
+            lines = []
+            for paragraph in text.split("\n"):
+                words = paragraph.split(" ")
+                line = ""
+                for word in words:
+                    test_line = line + word + " "
+                    w = get_text_width(draw, test_line, font)
+                    if w <= max_width:
+                        line = test_line
+                    else:
+                        lines.append(line.strip())
+                        line = word + " "
+                lines.append(line.strip())
+            return lines
 
-    draw_wrapped_report(draw, texto_final, x0 + 15, y_text + 30, font_body, font_bold, "black", max_width - 30, line_spacing)
+        def draw_wrapped_report(draw, text, x, y, font_normal, font_bold, fill, max_width, line_spacing):
+            for bloque in text.strip().split("\n\n"):
+                if not bloque.strip():
+                    continue
+                lines = bloque.split("\n")
+                if len(lines) > 1 and ":" in lines[0]:
+                    title_line = lines[0]
+                    value_text = "\n".join(lines[1:])
+                    wrapped_title = wrap_text(draw, title_line, font_bold, max_width)
+                    for line in wrapped_title:
+                        draw.text((x, y), line, font=font_bold, fill=fill)
+                        y += font_bold.getbbox(line)[3] + line_spacing
+                    wrapped_value = wrap_text(draw, value_text, font_normal, max_width)
+                    for line in wrapped_value:
+                        draw.text((x, y), line, font=font_normal, fill=fill)
+                        y += font_normal.getbbox(line)[3] + line_spacing
+                    y += line_spacing
+                else:
+                    wrapped_lines = wrap_text(draw, bloque, font_normal, max_width)
+                    for line in wrapped_lines:
+                        draw.text((x, y), line, font=font_normal, fill=fill)
+                        y += font_normal.getbbox(line)[3] + line_spacing
+            return y
 
-    output_buffer = BytesIO()
-    img.save(output_buffer, format="PNG")
-    return Response(content=output_buffer.getvalue(), media_type="image/png")
+        # === 6. Dibuja título centrado ===
+        y_text = y0 + 10
+        for linea in titulo_lineas:
+            linea_width = get_text_width(draw, linea, font_title)
+            linea_x = x0 + (max_width - linea_width) / 2
+            draw.text((linea_x, y_text), linea, font=font_title, fill="black")
+            y_text += font_title.getbbox(linea)[3] + 4
+
+        # === 7. Dibuja cuerpo ===
+        draw_wrapped_report(draw, texto_final, x0 + 15, y_text + 30, font_body, font_bold, "black", max_width - 30, line_spacing)
+
+        # === 8. Retornar imagen ===
+        output_buffer = BytesIO()
+        img.save(output_buffer, format="PNG")
+        return Response(content=output_buffer.getvalue(), media_type="image/png")
+
+    except Exception as e:
+        # Captura errores (por ejemplo en Render)
+        return HTMLResponse(content=f"<h3 style='color:red;'>⚠️ Error: {e}</h3>")
+
