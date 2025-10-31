@@ -153,7 +153,7 @@ def generar_reporte():
                 return ImageFont.load_default()
 
         font_title = safe_font(font_bold_path, 19)
-        font_body = safe_font(font_regular_path, 15)
+        font_body = safe_font(font_regular_path, 16)
         font_bold = safe_font(font_bold_path, 16)
 
         # === 5. Configuración del texto ===
