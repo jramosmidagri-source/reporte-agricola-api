@@ -7,14 +7,15 @@ import requests
 from io import BytesIO
 from datetime import datetime
 import os
+from fastapi import Request
 
 app = FastAPI(title="Generador de Reportes Agrícolas")
 
 # ===========================
 # 🖥️ INTERFAZ WEB PRINCIPAL
 # ===========================
-@app.get("/", response_class=HTMLResponse)
-def home():
+@app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse)
+async def home(request: Request):
     html_content = """
     <!DOCTYPE html>
     <html lang="es">
