@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Response, Request
 from fastapi.responses import HTMLResponse
 import pandas as pd
 from urllib.parse import quote
@@ -7,7 +7,6 @@ import requests
 from io import BytesIO
 from datetime import datetime
 import os
-from fastapi import Request
 
 app = FastAPI(title="Generador de Reportes Agrícolas")
 
@@ -79,7 +78,6 @@ async def home(request: Request):
     """
     return HTMLResponse(content=html_content)
 
-
 # ===========================
 # ⚙️ ENDPOINT: GENERAR REPORTE
 # ===========================
@@ -117,15 +115,29 @@ def generar_reporte():
         hora_valor = str(ultimo_registro.get("Hora", "")).strip()
         fecha_hora_combinada = f"{fecha_valor} - {hora_valor} horas"
 
+        # === 2.3 Limpieza y formato de campos ===
+        def formatear_valor(valor):
+            """Convierte valores numéricos tipo float en enteros (sin .0) y limpia strings."""
+            try:
+                if isinstance(valor, (int, float)) and not isinstance(valor, bool):
+                    if float(valor).is_integer():
+                        return str(int(valor))
+                    else:
+                        return str(valor)
+                else:
+                    return str(valor).strip().replace('.0', '')
+            except Exception:
+                return str(valor).strip()
+
         campos_texto = {
-            "Tipo de evento": ultimo_registro.get("Tipo de evento", ""),
-            "Fecha y Hora": fecha_hora_combinada,
-            "Lugar": ultimo_registro.get("Lugar (Departamento/Provincia/Distrito/Centro Poblado-caserío-etc)", ""),
-            "Afectación Preliminar": ultimo_registro.get("Afectación Preliminar", ""),
-            "Acción Local": ultimo_registro.get("Acción Local", ""),
-            "Acción Sectorial": ultimo_registro.get("Acción Sectorial", ""),
-            "Código SINPAD": ultimo_registro.get("Código SINPAD", ""),
-            "Fuente": ultimo_registro.get("Fuente", "")
+            "Tipo de evento": formatear_valor(ultimo_registro.get("Tipo de evento", "")),
+            "Fecha y Hora": formatear_valor(fecha_hora_combinada),
+            "Lugar": formatear_valor(ultimo_registro.get("Lugar (Departamento/Provincia/Distrito/Centro Poblado-caserío-etc)", "")),
+            "Afectación Preliminar": formatear_valor(ultimo_registro.get("Afectación Preliminar", "")),
+            "Acción Local": formatear_valor(ultimo_registro.get("Acción Local", "")),
+            "Acción Sectorial": formatear_valor(ultimo_registro.get("Acción Sectorial", "")),
+            "Código SINPAD": formatear_valor(ultimo_registro.get("Código SINPAD", "")),
+            "Fuente": formatear_valor(ultimo_registro.get("Fuente", ""))
         }
 
         texto_final = ""
@@ -229,4 +241,3 @@ def generar_reporte():
 
     except Exception as e:
         return HTMLResponse(content=f"<h3 style='color:red;'>⚠️ Error: {e}</h3>")
-
