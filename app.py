@@ -168,8 +168,8 @@ def generar_reporte():
         font_bold = safe_font(font_bold_path, 16)
 
         # === 5. Configuración del texto ===
-        x0, y0 = 430, 350
-        x1, y1 = 900, 480
+        x0, y0 = 320, 350
+        x1, y1 = 800, 480
         max_width = x1 - x0
         line_spacing = 8
 
