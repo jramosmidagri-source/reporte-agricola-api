@@ -117,17 +117,28 @@ def generar_reporte():
 
         # === Limpieza y formato de campos ===
         def formatear_valor(valor):
-            """Convierte valores numéricos tipo float en enteros (sin .0) y limpia strings."""
+            """Convierte valores numéricos en texto legible y evita mostrar 'nan'."""
+            if pd.isna(valor) or str(valor).strip().lower() in ["nan", "none", ""]:
+                return ""  # evita mostrar 'nan' o espacios vacíos
+
+            valor_str = str(valor).strip()
+
+            # Si es un número (ej. 123456.0) → convertirlo a entero sin .0
             try:
                 if isinstance(valor, (int, float)) and not isinstance(valor, bool):
                     if float(valor).is_integer():
                         return str(int(valor))
                     else:
                         return str(valor)
+                # Si el string representa un número entero, limpiar el .0
+                elif valor_str.replace(".", "", 1).isdigit():
+                    if valor_str.endswith(".0"):
+                        return valor_str[:-2]
+                    return valor_str
                 else:
-                    return str(valor).strip()
+                    return valor_str  # texto (ej. "En proceso")
             except Exception:
-                return str(valor).strip()
+                return valor_str
 
         campos_texto = {
             "Tipo de evento": formatear_valor(ultimo_registro.get("Tipo de evento", "")),
@@ -164,8 +175,8 @@ def generar_reporte():
                 return ImageFont.load_default()
 
         font_title = safe_font(font_bold_path, 19)
-        font_body = safe_font(font_regular_path, 17)
-        font_bold = safe_font(font_bold_path, 16)
+        font_body = safe_font(font_regular_path, 18)
+        font_bold = safe_font(font_bold_path, 17)
 
         # === 5. Configuración del texto ===
         x0, y0 = 320, 350
