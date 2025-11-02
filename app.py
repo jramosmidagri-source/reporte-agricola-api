@@ -78,6 +78,7 @@ async def home(request: Request):
     """
     return HTMLResponse(content=html_content)
 
+
 # ===========================
 # ⚙️ ENDPOINT: GENERAR REPORTE
 # ===========================
@@ -114,18 +115,17 @@ def generar_reporte():
         hora_valor = str(ultimo_registro.get("Hora", "")).strip()
         fecha_hora_combinada = f"{fecha_valor} - {hora_valor} horas"
 
-        # === 2.3 Limpieza y formato de campos ===
+        # === Limpieza y formato de campos ===
         def formatear_valor(valor):
-            """Limpia texto y convierte floats enteros, pero respeta texto en SINPAD u otros."""
+            """Convierte valores numéricos tipo float en enteros (sin .0) y limpia strings."""
             try:
-                texto = str(valor).strip()
-                if texto.lower() in ["nan", "none", ""]:
-                    return ""
-                # Si es número entero (como 123.0)
-                if texto.replace(".", "", 1).isdigit():
-                    num = float(texto)
-                    return str(int(num)) if num.is_integer() else texto
-                return texto  # Texto normal (e.g. 'En trámite')
+                if isinstance(valor, (int, float)) and not isinstance(valor, bool):
+                    if float(valor).is_integer():
+                        return str(int(valor))
+                    else:
+                        return str(valor)
+                else:
+                    return str(valor).strip()
             except Exception:
                 return str(valor).strip()
 
@@ -168,8 +168,8 @@ def generar_reporte():
         font_bold = safe_font(font_bold_path, 16)
 
         # === 5. Configuración del texto ===
-        x0, y0 = 320, 350
-        x1, y1 = 800, 480
+        x0, y0 = 430, 350
+        x1, y1 = 900, 480
         max_width = x1 - x0
         line_spacing = 8
 
@@ -197,31 +197,34 @@ def generar_reporte():
                 lines.append(line.strip())
             return lines
 
+        # === 6. NUEVA FUNCIÓN corregida ===
         def draw_wrapped_report(draw, text, x, y, font_normal, font_bold, fill, max_width, line_spacing):
+            """Dibuja bloques con título en negrita y valores normales, incluso si están vacíos o son texto."""
             for bloque in text.strip().split("\n\n"):
                 if not bloque.strip():
                     continue
-                lines = bloque.split("\n")
-                if len(lines) > 1 and ":" in lines[0]:
-                    title_line = lines[0]
-                    value_text = "\n".join(lines[1:])
-                    wrapped_title = wrap_text(draw, title_line, font_bold, max_width)
-                    for line in wrapped_title:
-                        draw.text((x, y), line, font=font_bold, fill=fill)
-                        y += font_bold.getbbox(line)[3] + line_spacing
-                    wrapped_value = wrap_text(draw, value_text, font_normal, max_width)
+
+                lineas = bloque.split("\n", 1)
+                titulo_linea = lineas[0]
+                valor_linea = lineas[1] if len(lineas) > 1 else ""
+
+                # Título en negrita
+                wrapped_title = wrap_text(draw, titulo_linea, font_bold, max_width)
+                for line in wrapped_title:
+                    draw.text((x, y), line, font=font_bold, fill=fill)
+                    y += font_bold.getbbox(line)[3] + line_spacing
+
+                # Valor normal (si existe)
+                if valor_linea.strip():
+                    wrapped_value = wrap_text(draw, valor_linea, font_normal, max_width)
                     for line in wrapped_value:
                         draw.text((x, y), line, font=font_normal, fill=fill)
                         y += font_normal.getbbox(line)[3] + line_spacing
-                    y += line_spacing
-                else:
-                    wrapped_lines = wrap_text(draw, bloque, font_normal, max_width)
-                    for line in wrapped_lines:
-                        draw.text((x, y), line, font=font_normal, fill=fill)
-                        y += font_normal.getbbox(line)[3] + line_spacing
+
+                y += line_spacing
             return y
 
-        # === 6. Dibuja título centrado ===
+        # === 7. Dibuja título centrado ===
         y_text = y0 + 10
         for linea in titulo_lineas:
             linea_width = get_text_width(draw, linea, font_title)
@@ -229,10 +232,10 @@ def generar_reporte():
             draw.text((linea_x, y_text), linea, font=font_title, fill="black")
             y_text += font_title.getbbox(linea)[3] + 4
 
-        # === 7. Dibuja cuerpo ===
+        # === 8. Dibuja cuerpo ===
         draw_wrapped_report(draw, texto_final, x0 + 15, y_text + 30, font_body, font_bold, "black", max_width - 30, line_spacing)
 
-        # === 8. Retornar imagen ===
+        # === 9. Retornar imagen ===
         output_buffer = BytesIO()
         img.save(output_buffer, format="PNG")
         return Response(content=output_buffer.getvalue(), media_type="image/png")
