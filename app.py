@@ -107,8 +107,7 @@ def generar_reporte():
         anio_actual = datetime.now().year
         titulo_lineas = [
             f"REPORTE RÁPIDO N° {numero_reporte_valor}-{anio_actual}-",
-            "SG-ODNGRD-COESMIDAGRI",
-            "REPORTE DE EVENTO AGRÍCOLA"
+            "SG-ODNGRD-COESMIDAGRI"
         ]
 
         fecha_valor = str(ultimo_registro.get("Fecha", "")).strip()
@@ -117,15 +116,16 @@ def generar_reporte():
 
         # === 2.3 Limpieza y formato de campos ===
         def formatear_valor(valor):
-            """Convierte valores numéricos tipo float en enteros (sin .0) y limpia strings."""
+            """Limpia texto y convierte floats enteros, pero respeta texto en SINPAD u otros."""
             try:
-                if isinstance(valor, (int, float)) and not isinstance(valor, bool):
-                    if float(valor).is_integer():
-                        return str(int(valor))
-                    else:
-                        return str(valor)
-                else:
-                    return str(valor).strip().replace('.0', '')
+                texto = str(valor).strip()
+                if texto.lower() in ["nan", "none", ""]:
+                    return ""
+                # Si es número entero (como 123.0)
+                if texto.replace(".", "", 1).isdigit():
+                    num = float(texto)
+                    return str(int(num)) if num.is_integer() else texto
+                return texto  # Texto normal (e.g. 'En trámite')
             except Exception:
                 return str(valor).strip()
 
@@ -141,13 +141,11 @@ def generar_reporte():
         }
 
         texto_final = ""
-        contador = 1
-        for titulo, valor in campos_texto.items():
-            texto_final += f"{contador}. {titulo}:\n{valor}\n\n"
-            contador += 1
+        for i, (titulo, valor) in enumerate(campos_texto.items(), start=1):
+            texto_final += f"{i}. {titulo}:\n{valor}\n\n"
 
         # === 3. Imagen base ===
-        drive_link = "https://drive.google.com/file/d/1AjfY8329DtFq_CEOgnIXgZEdXTJD92Sy/view?usp=drive_link"
+        drive_link = "https://drive.google.com/file/d/1WLrlBJ_mnl_sZXme-7UC6JihpiEGFs_x/view?usp=sharing"
         file_id = drive_link.split("/d/")[1].split("/")[0]
         download_url = f"https://drive.google.com/uc?export=download&id={file_id}"
         response = requests.get(download_url)
