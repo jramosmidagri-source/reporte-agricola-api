@@ -140,16 +140,16 @@ def generar_reporte():
             except Exception:
                 return valor_str
         campos_texto = {
-            "🌪 Tipo de evento": formatear_valor(ultimo_registro.get("Tipo de evento", "")),
-            "🗓 Fecha y hora": formatear_valor(fecha_hora_combinada),
-            "📍 Lugar": formatear_valor(ultimo_registro.get("Lugar (Departamento/Provincia/Distrito/Centro Poblado-caserío-etc)", "")),
-            "🔴 Afectación preliminar": formatear_valor(ultimo_registro.get("Afectación Preliminar", "")),
-            "⛑ Acción local": formatear_valor(ultimo_registro.get("Acción Local", "")),
-            "🏛 Acción sectorial": formatear_valor(ultimo_registro.get("Acción Sectorial", "")),
-            "🆔 Código SINPAD": formatear_valor(ultimo_registro.get("Código SINPAD", "")),
-            "🤝 Fuente": formatear_valor(ultimo_registro.get("Fuente", ""))
+            "Tipo de evento": formatear_valor(ultimo_registro.get("Tipo de evento", "")),
+            "Fecha y Hora": formatear_valor(fecha_hora_combinada),
+            "Lugar": formatear_valor(ultimo_registro.get("Lugar (Departamento/Provincia/Distrito/Centro Poblado-caserío-etc)", "")),
+            "Afectación Preliminar": formatear_valor(ultimo_registro.get("Afectación Preliminar", "")),
+            "Acción Local": formatear_valor(ultimo_registro.get("Acción Local", "")),
+            "Acción Sectorial": formatear_valor(ultimo_registro.get("Acción Sectorial", "")),
+            "Código SINPAD": formatear_valor(ultimo_registro.get("Código SINPAD", "")),
+            "Fuente": formatear_valor(ultimo_registro.get("Fuente", ""))
         }
-    
+            
         texto_final = ""
         for i, (titulo, valor) in enumerate(campos_texto.items(), start=1):
             texto_final += f"{i}. {titulo}:\n{valor}\n\n"
@@ -179,7 +179,7 @@ def generar_reporte():
         font_bold = safe_font(font_bold_path, 20)
 
         # === 5. Configuración del texto ===
-        x0, y0 = 300, 300
+        x0, y0 = 280, 250
         x1, y1 = 820, 480
         max_width = x1 - x0
         line_spacing = 8
