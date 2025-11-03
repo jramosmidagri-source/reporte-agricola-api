@@ -239,7 +239,7 @@ def generar_reporte():
         y_text = y0 + 10
         for linea in titulo_lineas:
             linea_width = get_text_width(draw, linea, font_title)
-            linea_x = x0 + (max_width - linea_width) / 2 - 25
+            linea_x = x0 + (max_width - linea_width) / 2 - 30
             draw.text((linea_x, y_text), linea, font=font_title, fill="black")
             y_text += font_title.getbbox(linea)[3] + 4
 
