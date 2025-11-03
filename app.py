@@ -175,8 +175,8 @@ def generar_reporte():
                 return ImageFont.load_default()
 
         font_title = safe_font(font_bold_path, 22)
-        font_body = safe_font(font_regular_path, 20)
-        font_bold = safe_font(font_bold_path, 20)
+        font_body = safe_font(font_regular_path, 22)
+        font_bold = safe_font(font_bold_path, 21)
 
         # === 5. Configuración del texto ===
         x0, y0 = 280, 250
@@ -236,10 +236,10 @@ def generar_reporte():
             return y
 
         # === 7. Dibuja título centrado ===
-        y_text = y0 + 9
+        y_text = y0 + 10
         for linea in titulo_lineas:
             linea_width = get_text_width(draw, linea, font_title)
-            linea_x = x0 + (max_width - linea_width) / 2
+            linea_x = x0 + (max_width - linea_width) / 2 - 5
             draw.text((linea_x, y_text), linea, font=font_title, fill="black")
             y_text += font_title.getbbox(linea)[3] + 4
 
