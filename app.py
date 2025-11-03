@@ -180,7 +180,7 @@ def generar_reporte():
 
         # === 5. Configuración del texto ===
         x0, y0 = 280, 250
-        x1, y1 = 820, 480
+        x1, y1 = 810, 480
         max_width = x1 - x0
         line_spacing = 8
 
@@ -236,7 +236,7 @@ def generar_reporte():
             return y
 
         # === 7. Dibuja título centrado ===
-        y_text = y0 + 10
+        y_text = y0 + 9
         for linea in titulo_lineas:
             linea_width = get_text_width(draw, linea, font_title)
             linea_x = x0 + (max_width - linea_width) / 2
