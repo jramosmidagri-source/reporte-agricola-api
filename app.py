@@ -156,12 +156,13 @@ def generar_reporte():
             texto_final += f"{i}. {titulo}:\n{valor}\n\n"
 
         # === 3. Imagen base ===
-        drive_link = "https://drive.google.com/file/d/1WLrlBJ_mnl_sZXme-7UC6JihpiEGFs_x/view?usp=sharing"
+        drive_link = "https://drive.google.com/file/d/1NfH4W8DiOtVnaz2pSf11goWHEpiKmFlH/view?usp=sharing"  # nuevo enlace
         file_id = drive_link.split("/d/")[1].split("/")[0]
         download_url = f"https://drive.google.com/uc?export=download&id={file_id}"
         response = requests.get(download_url)
         img = Image.open(BytesIO(response.content)).convert("RGB")
         draw = ImageDraw.Draw(img)
+
 
         # === 4. Fuentes personalizadas ===
         base_path = os.path.dirname(os.path.abspath(__file__))
